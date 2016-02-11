@@ -1,0 +1,141 @@
+window.Instagram = {
+  searchByTagName: function() {
+    var searchVal = $('#search').val();
+    var ajaxComplete = true;
+    $.ajax('//api.instagram.com/v1/tags/' + searchVal + '/media/recent?', {
+      type: 'GET',
+      dataType: 'jsonp',
+      timeout: 3000,
+      jsonpCallback: 'receiveTagData',
+      data: {
+        access_token: "<%= ENV['access_token'] %>",
+      },
+      success: function(data) {
+        for (var i = 0; i < data.data.length; i++) {
+          var post = data.data[i];
+          console.log(post.location)
+               $("body").on("swiperight", ".buddy", function(){
+             $(this).addClass('rotate-left').delay(700).fadeOut(1);
+
+            $(this).append('<div class="status like">Like!</div>');      
+              if ( $(this).is(':last-child') ) {
+            $('.buddy:nth-child(1)').removeClass ('rotate-left rotate-right').fadeIn(300);
+           } else {
+            $(this).next().removeClass('rotate-left rotate-right').fadeIn(400);
+         }
+    });  
+
+   $("body").on("swipeleft",".buddy",function(){
+    $(this).addClass('rotate-right').delay(700).fadeOut(1);
+    $(this).append('<div class="status dislike">Dislike!</div>');
+    $(this).next().removeClass('rotate-left rotate-right').fadeIn(400);
+     
+  });
+          var $div = $('<div class="buddy"><div class="avatar"></div></div>');
+          $div.find('.avatar').css('background-image', "url(" + post.images.standard_resolution.url + ")");
+          $div.appendTo($("#container"));
+        }
+      }
+    }).fail(function(data) {
+      // receiveTagData(data, "FAIL");
+    });
+  },
+  searchSydney: function() {
+    var ajaxComplete = true;
+    $.ajax('https://api.instagram.com/v1/locations/search?lat=33.8650&lng=151.2094&', {
+      type: 'GET',
+      dataType: 'jsonp',
+      timeout: 3000,
+      jsonpCallback: 'receiveTagData',
+      data: {
+        access_token: "<%= ENV['access_token'] %>",
+      },
+      success: function(data) {
+        // console.log(data.data);
+        for (var i = 0; i < data.data.length; i++) {
+          var post = data.data[i];
+          var imgSearch = post.id
+          $.ajax('https://api.instagram.com/v1/locations/' + imgSearch + '/media/recent?access_token=ACCESS-TOKEN', {
+            type: 'GET',
+            dataType: 'jsonp',
+            timeout: 3000,
+            // jsonpCallback: 'receiveTagData',
+            data: {
+              access_token: "<%= ENV['access_token'] %>",
+            },
+            success: function(info) {
+              for (var j = 0; j < info.data.length; j++) {
+
+                var actualPost = info.data[j];
+                console.log(actualPost.location)
+
+                var $div = $('<div class="buddy"></div>');
+                $div.html("<div class='avatar'></div>");
+                $div.find('.avatar').css('background-image', "url(" + actualPost.images.standard_resolution.url + ")");
+                $div.appendTo($("#container"));
+
+                $div.data({
+                  latitude: actualPost.location.latitude,
+                  longitude: actualPost.location.longitude,
+                  city_id: actualPost.location.id,
+                  url: actualPost.link,
+                  name: actualPost.location.name
+                });
+
+                $("body").on("swiperight", ".buddy", function(e) {
+                  console.log("laknakln")
+                  if ($(this).hasClass("swiped")) { return false; };
+                  $(this).addClass("swiped");
+                  $(this).addClass('rotate-left').delay(700).fadeOut(1);
+                  $(this).append('<div class="status like">Like!</div>');
+                  // console.log(currentPost.location);
+
+                  var data = $(this).data();
+                  $.ajax({
+                    url: '/posts',
+                    type: 'POST',
+                    data: {
+                      post: {
+                        latitude: data.latitude,
+                        longitude: data.longitude,
+                        city_id: data.city_id,
+                        url: data.url,
+                        name: data.name
+                      }
+                    },
+                  });
+
+                  if ($(this).is(':last-child')) {
+                    $('.buddy:nth-child(1)').removeClass('rotate-left rotate-right').fadeIn(300);
+                  } else {
+                    $(this).next().removeClass('rotate-left rotate-right').fadeIn(400);
+                  }
+                });
+
+                $("body").on("swipeleft", ".buddy", function() {
+                  $(this).addClass('rotate-right').delay(700).fadeOut(1);
+                  $(this).append('<div class="status dislike">Dislike!</div>');
+                  $(this).next().removeClass('rotate-left rotate-right').fadeIn(400);
+                });
+
+              
+              }
+            }
+          }).fail(function(data) {
+            // console.log("FAIL");
+          });
+        }
+      }
+    }).fail(function(data) {
+      // console.log("FAIL");
+    });
+  }
+}
+$(document).ready(function() {
+  $('#form').on('submit', function(e) {
+    e.preventDefault();
+    var searchVal = $('#search').val();
+    Instagram.searchByTagName(searchVal);
+  })
+  
+});

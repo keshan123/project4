@@ -1,0 +1,8 @@
+defaults: &defaults
+  access_token: 2583670140.1677ed0.386c99d44c5e4bf592e15f81625e8c79
+development:
+  <<: *defaults
+test:
+  <<: *defaults
+production:
+  <<: *defaults
